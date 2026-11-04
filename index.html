@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#480749">
+<title>Contagem Puro Açaí</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Visual único (claro), nas cores da marca: roxo açaí #480749 */
+:root{
+  --acai:#480749; --acai-2:#5e1f5f; --acai-soft:#efe3ee; --acai-text:#e9d7e6;
+  --bg:#f4f2f6; --surface:#ffffff; --ink:#1d1a22; --muted:#5f5868; --line:#e2dde6; --line-2:#efeaf2;
+  --ok:#145236; --ok-soft:#e2f3ea; --warn:#7a4700; --warn-soft:#fbf0dc; --bad:#8c1d17; --bad-soft:#fbe6e4; --bad-line:#b3261e;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #b07aad;outline-offset:2px}
+[hidden]{display:none!important}
+
+header.top{background:var(--acai);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.top-in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top img{height:60px;width:auto;display:block}
+.who{display:flex;flex-direction:column;align-items:flex-end;gap:1px;background:transparent;border:0;padding:6px 0;color:#fff;text-align:right;min-height:44px;justify-content:center}
+.who b{font-size:14px}
+.who span{font-size:13px;color:var(--acai-text)}
+
+.progress{background:var(--surface);border-bottom:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.progress-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.progress-row{display:flex;justify-content:space-between;font-size:13px}
+.progress-row span{font-family:var(--mono);color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:#ece6ef;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--acai);transition:width .3s}
+
+main{max-width:560px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:16px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:8px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.btn{min-height:52px;border-radius:12px;border:1px solid #dcd5e1;background:var(--surface);font-weight:600;font-size:16px;padding:0 16px}
+.btn.primary{background:var(--acai);border-color:var(--acai);color:#fff}
+.btn.big{min-height:60px;font-size:18px;font-weight:700;border-radius:14px}
+.btn.ghost{background:transparent;color:var(--acai)}
+.btn:disabled{opacity:.6}
+.input{height:56px;padding:0 14px;border:2px solid var(--acai);border-radius:12px;background:var(--surface);font-size:17px;width:100%}
+.input.light{border:1px solid #cfc6d6}
+
+.scanrow{display:flex;gap:8px}
+#scan{flex:1;min-width:0;height:60px;font-family:var(--mono);font-size:18px;letter-spacing:.03em}
+#scan::placeholder{font-family:var(--sans);font-size:16px;letter-spacing:0}
+#scan.err{border-color:var(--bad-line)}
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tool{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #dcd5e1;border-radius:12px;background:var(--surface);font-size:13px;font-weight:600;padding:6px;text-align:center}
+
+.msg{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.4}
+.msg svg{flex-shrink:0;margin-top:1px}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* ficha */
+.photo{height:220px;border-radius:12px;background:var(--acai-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--acai);font-size:13px;font-weight:600;overflow:hidden;text-align:center;padding:8px}
+.photo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.pill{align-self:flex-start;padding:4px 10px;border-radius:99px;background:var(--ok-soft);color:#1b6a43;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pill.inativo{background:var(--bad-soft);color:var(--bad)}
+.pill.controle{background:var(--warn-soft);color:var(--warn)}
+.desc{margin:0;font-size:21px;line-height:1.25;text-wrap:balance}
+.codes{font-family:var(--mono);font-size:13px;color:var(--muted);word-break:break-all}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px;border-radius:12px;background:#e9e4ed}
+.seg button{min-height:48px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:600;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--acai);font-weight:700;box-shadow:0 1px 3px rgba(29,26,34,.12)}
+.qtyrow{display:flex;gap:8px}
+.step{width:64px;min-height:72px;border:1px solid #dcd5e1;border-radius:12px;background:var(--surface);color:var(--acai);font-size:28px;font-weight:600}
+#qty{flex:1;min-width:0;height:72px;font-family:var(--mono);font-size:34px;font-weight:600;text-align:center}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--muted)}
+.total span:first-child{min-width:0}
+.total span:last-child{font-family:var(--mono);white-space:nowrap}
+.total strong{font-size:22px;color:var(--ink)}
+
+/* listas */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px;padding:10px 16px;border:0;border-bottom:1px solid var(--line-2);background:var(--surface);text-align:left;width:100%}
+.row:last-child{border-bottom:0}
+.row .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .t b{font-size:14px;font-weight:600}
+.row .t small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.row .q{font-family:var(--mono);font-size:18px;font-weight:600;white-space:nowrap}
+.row .chk{flex-shrink:0;padding:4px 10px;border-radius:99px;background:var(--ok-soft);color:#1b6a43;font-family:var(--mono);font-size:13px;font-weight:600}
+.empty{padding:16px;color:var(--muted);font-size:14px;margin:0}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.listhead h2{margin:0;font-size:16px}
+.linkbtn{background:none;border:0;color:var(--acai);font-weight:600;padding:10px 0;min-height:44px}
+
+/* câmera */
+#camera{position:fixed;inset:0;z-index:50;background:#120f14;color:#fff;display:flex;flex-direction:column}
+.cam-top{display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px))}
+.cam-top b{font-size:18px}
+.iconbtn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:22px;background:#2b2530;color:#fff}
+.cam-view{position:relative;flex:1;overflow:hidden;background:#000}
+.cam-view video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.frame{position:absolute;left:50%;top:50%;width:min(80vw,320px);height:min(48vw,190px);transform:translate(-50%,-50%);border:3px solid #fff;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.45)}
+.frame::after{content:"";position:absolute;left:16px;right:16px;top:50%;height:2px;background:#ff6b5e}
+.cam-tip{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:15px;padding:0 24px;text-shadow:0 1px 3px #000}
+.cam-actions{display:flex;flex-direction:column;gap:10px;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.cam-actions .btn{background:#fff;color:var(--ink);border:0}
+.cam-actions .btn.dark{background:transparent;color:#fff;border:1px solid #4a4250}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <img src="logo-branca.png" alt="Puro Açaí" width="69" height="52">
+    <button class="who" id="btnWho" type="button" aria-label="Alterar conferente e local">
+      <b id="whoName">Conferente</b>
+      <span id="whoLocal">Toque para preencher</span>
+    </button>
+  </div>
+</header>
+
+<div class="progress">
+  <div class="progress-in">
+    <div class="progress-row"><b>Progresso</b><span id="progTxt">carregando…</span></div>
+    <div class="bar"><i id="progBar"></i></div>
+  </div>
+</div>
+
+<main>
+  <!-- configuração -->
+  <section class="card" id="setup" hidden aria-label="Configuração">
+    <h2 style="margin:0;font-size:18px">Antes de começar</h2>
+    <div class="field"><label class="lbl" for="cfgNome">Seu nome</label><input class="input light" id="cfgNome" autocomplete="name" placeholder="Nome do conferente"></div>
+    <div class="field"><label class="lbl" for="cfgLocal">Local / câmara</label><input class="input light" id="cfgLocal" placeholder="Ex.: Câmara 1"></div>
+    <div class="field" id="cfgPinWrap" hidden><label class="lbl" for="cfgPin">PIN da equipe</label><input class="input light" id="cfgPin" inputmode="numeric" autocomplete="off"></div>
+    <div class="field" id="cfgUrlWrap" hidden><label class="lbl" for="cfgUrl">Endereço do Apps Script</label><input class="input light" id="cfgUrl" placeholder="https://script.google.com/macros/s/…/exec"><p class="hint">Cole a URL do App da Web que termina em /exec.</p></div>
+    <div id="cfgMsg" hidden></div>
+    <button class="btn primary big" type="button" id="cfgSalvar">Começar a contar</button>
+  </section>
+
+  <!-- leitura -->
+  <section id="leitura" class="field" aria-label="Leitura do código">
+    <label class="lbl" for="scan">Código de barras</label>
+    <form class="scanrow" id="scanForm" autocomplete="off">
+      <input class="input" id="scan" inputmode="numeric" enterkeyhint="search" placeholder="Bipe ou digite o código">
+      <button class="btn primary" type="submit" style="min-height:60px">Buscar</button>
+    </form>
+    <p class="hint">Com leitor USB ou Bluetooth, deixe o cursor aqui e bipe.</p>
+    <div class="tools">
+      <button class="tool" type="button" id="btnCam">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#480749" stroke-width="1.8" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 12h10"/></svg>
+        Câmera ao vivo</button>
+      <button class="tool" type="button" id="btnFoto">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#480749" stroke-width="1.8" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7l1.5-3h5L16 7"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+        Foto do código</button>
+      <button class="tool" type="button" id="btnBusca">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#480749" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+        Buscar por nome</button>
+    </div>
+    <input type="file" id="foto" accept="image/*" capture="environment" hidden>
+  </section>
+
+  <div id="msg" role="status" hidden></div>
+
+  <!-- não encontrado -->
+  <section id="naoEnc" class="field" hidden>
+    <div class="msg bad" role="alert" style="flex-direction:column;gap:8px;padding:18px">
+      <b style="font-size:17px">Código não está na planilha</b>
+      <span>O código <b id="naoEncCod" style="font-family:var(--mono)"></b> não pertence a nenhum produto do catálogo. Confira o número na etiqueta ou procure pelo nome.</span>
+    </div>
+    <button class="btn primary" type="button" id="naoEncBusca">Buscar o produto pelo nome</button>
+    <button class="btn" type="button" id="naoEncOutro">Ler outro código</button>
+  </section>
+
+  <!-- busca -->
+  <section id="busca" class="field" hidden aria-label="Buscar por nome">
+    <div class="listhead"><label class="lbl" for="q">Nome ou código PRD</label><button class="linkbtn" type="button" id="buscaFechar">Fechar</button></div>
+    <input class="input" id="q" autocomplete="off" placeholder="Ex.: açaí 5 lt, PRD00330">
+    <p class="hint" id="buscaInfo"></p>
+    <div class="list" id="results"></div>
+  </section>
+
+  <!-- ficha do produto -->
+  <section class="card" id="ficha" hidden aria-label="Produto">
+    <div class="photo" id="photo"></div>
+    <span class="pill" id="pill"></span>
+    <h1 class="desc" id="desc"></h1>
+    <span class="codes" id="codes"></span>
+    <div id="jaWrap" hidden class="field">
+      <div class="msg warn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg><span id="jaTxt"></span></div>
+      <span class="lbl" id="segLbl">O que fazer com a nova contagem</span>
+      <div class="seg" role="group" aria-labelledby="segLbl">
+        <button type="button" id="modoSub" aria-pressed="true">Substituir</button>
+        <button type="button" id="modoSom" aria-pressed="false">Somar</button>
+      </div>
+      <p class="hint">Use “Somar” quando o mesmo produto estiver em outro lugar da câmara.</p>
+    </div>
+    <form id="qtyForm" class="field">
+      <label class="lbl" for="qty" id="qtyLbl">Quantidade em estoque</label>
+      <div class="qtyrow">
+        <button class="step" type="button" id="menos" aria-label="Diminuir 1">−</button>
+        <input class="input" id="qty" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        <button class="step" type="button" id="mais" aria-label="Aumentar 1">+</button>
+      </div>
+      <div class="total" id="totalBox" hidden><span>Total na planilha</span><span id="totalTxt"></span></div>
+      <button class="btn primary big" type="submit" id="btnSalvar">Salvar na planilha</button>
+      <button class="btn ghost" type="button" id="btnCancelar">Cancelar</button>
+    </form>
+  </section>
+
+  <!-- lista -->
+  <section class="field" id="listaSec" aria-label="Itens">
+    <div class="seg" role="group" aria-label="Filtrar lista">
+      <button type="button" id="tabCont" aria-pressed="true">Contados</button>
+      <button type="button" id="tabFalt" aria-pressed="false">Faltam</button>
+    </div>
+    <div class="list" id="lista"></div>
+    <button class="btn ghost" type="button" id="btnAtualizar">Atualizar da planilha</button>
+  </section>
+</main>
+
+<!-- câmera -->
+<div id="camera" hidden role="dialog" aria-label="Ler código com a câmera">
+  <div class="cam-top"><b>Ler código</b>
+    <button class="iconbtn" type="button" id="camFechar" aria-label="Fechar câmera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="cam-view">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="frame" aria-hidden="true"></div>
+    <div class="cam-tip" id="camTip">Aponte para o código de barras. A leitura é automática.</div>
+  </div>
+  <div class="cam-actions">
+    <button class="btn" type="button" id="camDigitar">Digitar o código</button>
+    <button class="btn dark" type="button" id="camLuz" hidden>Ligar lanterna</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+<script>
+/* ===== CONFIGURAÇÃO =====
+   Cole aqui a URL do App da Web do Apps Script (termina em /exec).
+   Se ficar vazio, o app pede a URL na primeira vez e guarda no aparelho. */
+const API_URL = "";
+/* ======================== */
+
+const $ = id => document.getElementById(id);
+const LS = "contagem_puroacai_v2";
+const norm = s => String(s||"").replace(/\D/g,"").replace(/^0+/,"");
+const semAcento = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const fmt = n => Number(n).toLocaleString("pt-BR",{maximumFractionDigits:3});
+const ICON_OK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+let cfg = { nome:"", local:"", pin:"", url:"" };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem(LS)) || {}); } catch(e){}
+const salvarCfg = () => { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch(e){} };
+const apiUrl = () => (API_URL || cfg.url || "").trim();
+
+let PRODUTOS = [], porCodigo = {}, internosDup = {}, contagem = {}, atual = null, somar = false, aba = "cont";
+const fotos = {};
+
+/* ---------- API ---------- */
+async function apiGet(params){
+  const u = new URL(apiUrl());
+  Object.entries(Object.assign({pin:cfg.pin}, params)).forEach(([k,v]) => u.searchParams.set(k, v));
+  const r = await fetch(u.toString(), {redirect:"follow"});
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.erro || "Erro no servidor");
+  return j;
+}
+async function apiPost(body){
+  const r = await fetch(apiUrl(), {method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(Object.assign({pin:cfg.pin}, body))});
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.erro || "Erro no servidor");
+  return j;
+}
+
+/* ---------- mensagens ---------- */
+function mensagem(txt, tipo, html){
+  const m = $("msg");
+  if (!txt){ m.hidden = true; return; }
+  m.className = "msg " + tipo; m.innerHTML = (tipo === "ok" ? ICON_OK : "") + "<span></span>";
+  m.lastChild.textContent = txt; m.hidden = false;
+}
+
+/* ---------- configuração ---------- */
+function mostrarSetup(motivo){
+  $("setup").hidden = false;
+  $("cfgNome").value = cfg.nome; $("cfgLocal").value = cfg.local; $("cfgPin").value = cfg.pin; $("cfgUrl").value = cfg.url;
+  $("cfgUrlWrap").hidden = !!API_URL;
+  if (motivo === "pin") $("cfgPinWrap").hidden = false;
+  const cm = $("cfgMsg");
+  if (motivo === "pin"){ cm.className = "msg bad"; cm.textContent = "PIN incorreto ou não informado."; cm.hidden = false; }
+  else if (motivo === "url"){ cm.className = "msg bad"; cm.textContent = "Não consegui falar com o Apps Script. Confira o endereço e se a implantação está como “Qualquer pessoa”."; cm.hidden = false; }
+  else cm.hidden = true;
+  $("cfgNome").focus();
+}
+$("cfgSalvar").onclick = () => {
+  cfg.nome = $("cfgNome").value.trim(); cfg.local = $("cfgLocal").value.trim();
+  cfg.pin = $("cfgPin").value.trim(); if (!API_URL) cfg.url = $("cfgUrl").value.trim();
+  if (!cfg.nome){ const cm=$("cfgMsg"); cm.className="msg bad"; cm.textContent="Preencha seu nome."; cm.hidden=false; $("cfgNome").focus(); return; }
+  if (!apiUrl()){ const cm=$("cfgMsg"); cm.className="msg bad"; cm.textContent="Cole o endereço do Apps Script."; cm.hidden=false; $("cfgUrl").focus(); return; }
+  salvarCfg(); $("setup").hidden = true; pintarQuem(); carregar();
+};
+$("btnWho").onclick = () => mostrarSetup();
+function pintarQuem(){
+  $("whoName").textContent = cfg.nome || "Conferente";
+  $("whoLocal").textContent = cfg.local || (cfg.nome ? "Sem local" : "Toque para preencher");
+}
+
+/* ---------- carga ---------- */
+async function carregar(){
+  if (!apiUrl() || !cfg.nome){ mostrarSetup(); return; }
+  $("progTxt").textContent = "carregando…";
+  try {
+    const j = await apiGet({action:"dados"});
+    PRODUTOS = j.dados.produtos; contagem = j.dados.contagem || {};
+    porCodigo = {}; internosDup = {};
+    PRODUTOS.forEach(p => { if (p.ean) (porCodigo[norm(p.ean)] ||= []).push(p); internosDup[p.cod] = (internosDup[p.cod]||0) + 1; });
+    render(); focarScan();
+  } catch(e){
+    if (String(e.message).includes("PIN_INVALIDO")) mostrarSetup("pin");
+    else if (e instanceof TypeError || e instanceof SyntaxError) mostrarSetup("url");
+    else mensagem("Não consegui ler a planilha: " + e.message, "bad");
+    $("progTxt").textContent = "sem dados";
+  }
+}
+
+/* ---------- leitura ---------- */
+function focarScan(){ const s=$("scan"); s.focus({preventScroll:true}); s.select(); }
+function limparTelas(){ $("naoEnc").hidden = true; $("busca").hidden = true; $("ficha").hidden = true; $("scan").classList.remove("err"); }
+
+function buscarCodigo(raw){
+  const code = norm(raw);
+  if (!code) return;
+  limparTelas(); mensagem("");
+  const achados = porCodigo[code];
+  if (!achados){
+    $("naoEncCod").textContent = String(raw).trim(); $("naoEnc").hidden = false; $("scan").classList.add("err");
+    if (navigator.vibrate) navigator.vibrate([60,60,60]);
+    return;
+  }
+  if (navigator.vibrate) navigator.vibrate(60);
+  if (achados.length > 1) mensagem("Este código está em " + achados.length + " produtos da planilha. Confira se é o certo ou use “Buscar por nome”.", "warn");
+  mostrar(achados[0]);
+}
+$("scanForm").onsubmit = e => { e.preventDefault(); const v = $("scan").value; $("scan").value = ""; buscarCodigo(v); };
+$("naoEncOutro").onclick = () => { limparTelas(); focarScan(); };
+$("naoEncBusca").onclick = () => abrirBusca();
+
+/* ---------- ficha ---------- */
+function mostrarFoto(p){
+  const ph = $("photo"); ph.textContent = "";
+  if (!p.img){ ph.textContent = "Sem foto cadastrada"; return; }
+  const img = new Image(); img.alt = p.desc;
+  if (fotos[p.img]){ img.src = fotos[p.img]; ph.appendChild(img); return; }
+  img.onerror = async () => {
+    img.remove(); ph.textContent = "Carregando foto…";
+    try {
+      const j = await apiGet({action:"foto", id:p.img});
+      if (atual !== p) return;
+      ph.textContent = "";
+      if (j.foto){ fotos[p.img] = j.foto; const i2 = new Image(); i2.alt = p.desc; i2.src = j.foto; ph.appendChild(i2); }
+      else ph.textContent = "Foto indisponível";
+    } catch(e){ if (atual === p) ph.textContent = "Foto indisponível"; }
+  };
+  img.src = "https://drive.google.com/thumbnail?id=" + encodeURIComponent(p.img) + "&sz=w600";
+  ph.appendChild(img);
+}
+
+function mostrar(p){
+  atual = p; somar = false;
+  limparTelas(); $("ficha").hidden = false;
+  mostrarFoto(p);
+  const pill = $("pill"); pill.className = "pill";
+  if (/inativo/i.test(p.st)) pill.classList.add("inativo");
+  if (/controle/i.test(p.st)) pill.classList.add("controle");
+  pill.textContent = p.st || "Sem status";
+  $("desc").textContent = p.desc;
+  $("codes").textContent = p.cod + (p.ean ? " · " + p.ean : " · sem código de barras");
+  const c = contagem[p.k];
+  $("jaWrap").hidden = !c;
+  if (c) $("jaTxt").textContent = "Já contado: " + fmt(c.qtd) + (c.hora ? " às " + c.hora : "") + (c.conferente ? " por " + c.conferente : "") + (c.local ? ", " + c.local : "") + ".";
+  pintarModo();
+  $("qty").value = "";
+  atualizarTotal();
+  if (internosDup[p.cod] > 1) mensagem("Atenção: o código interno " + p.cod + " aparece em mais de um produto. Confira a descrição.", "warn");
+  $("ficha").scrollIntoView({behavior:"smooth", block:"start"});
+  setTimeout(() => $("qty").focus({preventScroll:true}), 250);
+}
+function pintarModo(){
+  $("modoSub").setAttribute("aria-pressed", String(!somar));
+  $("modoSom").setAttribute("aria-pressed", String(somar));
+  $("qtyLbl").textContent = somar ? "Quantidade encontrada aqui" : "Quantidade em estoque";
+}
+$("modoSub").onclick = () => { somar = false; pintarModo(); atualizarTotal(); };
+$("modoSom").onclick = () => { somar = true; pintarModo(); atualizarTotal(); };
+
+const lerQtd = () => { const s = String($("qty").value).trim().replace(",", "."); return s === "" ? NaN : Number(s); };
+function atualizarTotal(){
+  const c = atual && contagem[atual.k], v = lerQtd(), box = $("totalBox"), btn = $("btnSalvar");
+  if (c && somar && !isNaN(v)){
+    box.hidden = false;
+    $("totalTxt").innerHTML = fmt(c.qtd) + " + " + fmt(v) + " = <strong>" + fmt(c.qtd + v) + "</strong>";
+    btn.textContent = "Salvar " + fmt(c.qtd + v) + " na planilha";
+  } else { box.hidden = true; btn.textContent = "Salvar na planilha"; }
+}
+$("qty").oninput = atualizarTotal;
+$("menos").onclick = () => { const v = lerQtd(); $("qty").value = String(Math.max(0, (isNaN(v)?0:v) - 1)).replace(".", ","); atualizarTotal(); };
+$("mais").onclick = () => { const v = lerQtd(); $("qty").value = String((isNaN(v)?0:v) + 1).replace(".", ","); atualizarTotal(); };
+$("btnCancelar").onclick = () => { atual = null; limparTelas(); mensagem(""); focarScan(); };
+
+let salvando = false;
+$("qtyForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!atual || salvando) return;
+  const v = lerQtd();
+  if (isNaN(v) || v < 0){ mensagem("Digite uma quantidade válida (0 ou mais).", "bad"); $("qty").focus(); return; }
+  const p = atual; salvando = true;
+  const btn = $("btnSalvar"); btn.disabled = true; btn.textContent = "Salvando…";
+  try {
+    const j = await apiPost({action:"salvar", registro:{k:p.k, ean:p.ean, cod:p.cod, desc:p.desc, qtd:v, somar:somar && !!contagem[p.k], conferente:cfg.nome, local:cfg.local, aparelho:navigator.userAgent}});
+    contagem[p.k] = {qtd:j.resultado.qtd, hora:j.resultado.hora, conferente:cfg.nome, local:cfg.local};
+    atual = null; limparTelas();
+    mensagem("Salvo na planilha. " + p.desc + " = " + fmt(j.resultado.qtd), "ok");
+    render(); focarScan(); window.scrollTo({top:0, behavior:"smooth"});
+  } catch(err){
+    if (String(err.message).includes("PIN_INVALIDO")) mostrarSetup("pin");
+    else mensagem("Não foi salvo: " + (err instanceof TypeError ? "sem conexão com a planilha" : err.message) + ". Tente de novo.", "bad");
+  } finally { salvando = false; btn.disabled = false; atualizarTotal(); }
+};
+
+/* ---------- busca ---------- */
+function abrirBusca(){ limparTelas(); mensagem(""); $("busca").hidden = false; $("q").value = ""; listarBusca(""); $("q").focus(); }
+$("btnBusca").onclick = abrirBusca;
+$("buscaFechar").onclick = () => { $("busca").hidden = true; focarScan(); };
+$("q").oninput = e => listarBusca(e.target.value);
+function listarBusca(q){
+  const termos = semAcento(q).split(/\s+/).filter(Boolean);
+  const achados = PRODUTOS.filter(p => { const t = semAcento(p.desc + " " + p.cod + " " + p.ean); return termos.every(x => t.includes(x)); });
+  $("buscaInfo").textContent = achados.length + (achados.length === 1 ? " produto encontrado." : " produtos encontrados.") + " Acentos não fazem diferença.";
+  const r = $("results"); r.textContent = "";
+  if (!achados.length){ const e = document.createElement("p"); e.className = "empty"; e.textContent = "Nada encontrado. Tente outra palavra."; r.appendChild(e); return; }
+  achados.forEach(p => r.appendChild(linha(p, contagem[p.k] ? "chk" : null, () => mostrar(p))));
+}
+
+/* ---------- lista ---------- */
+function linha(p, tipo, onclick){
+  const b = document.createElement("button"); b.type = "button"; b.className = "row"; b.onclick = onclick;
+  const t = document.createElement("span"); t.className = "t";
+  const n = document.createElement("b"); n.textContent = p.desc;
+  const s = document.createElement("small"); const c = contagem[p.k];
+  s.textContent = p.cod + (c ? (c.hora ? " · " + c.hora : "") + (c.conferente ? " · " + c.conferente : "") : (p.ean ? " · " + p.ean : " · sem código de barras"));
+  t.append(n, s); b.appendChild(t);
+  if (tipo === "q" && c){ const q = document.createElement("span"); q.className = "q"; q.textContent = fmt(c.qtd); b.appendChild(q); }
+  if (tipo === "chk" && c){ const q = document.createElement("span"); q.className = "chk"; q.textContent = "✓ " + fmt(c.qtd); b.appendChild(q); }
+  return b;
+}
+function render(){
+  const cont = PRODUTOS.filter(p => contagem[p.k]);
+  const falt = PRODUTOS.filter(p => !contagem[p.k]);
+  $("progTxt").textContent = cont.length + " de " + PRODUTOS.length + " produtos";
+  $("progBar").style.width = (PRODUTOS.length ? cont.length / PRODUTOS.length * 100 : 0) + "%";
+  $("tabCont").textContent = "Contados · " + cont.length;
+  $("tabFalt").textContent = "Faltam · " + falt.length;
+  $("tabCont").setAttribute("aria-pressed", String(aba === "cont"));
+  $("tabFalt").setAttribute("aria-pressed", String(aba === "falt"));
+  const l = $("lista"); l.textContent = "";
+  const itens = aba === "cont" ? cont : falt;
+  if (!itens.length){ const e = document.createElement("p"); e.className = "empty"; e.textContent = aba === "cont" ? "Nenhum item contado ainda. Bipe o primeiro código acima." : "Todos os produtos foram contados."; l.appendChild(e); return; }
+  itens.forEach(p => l.appendChild(linha(p, "q", () => mostrar(p))));
+}
+$("tabCont").onclick = () => { aba = "cont"; render(); };
+$("tabFalt").onclick = () => { aba = "falt"; render(); };
+$("btnAtualizar").onclick = () => { mensagem(""); carregar(); };
+
+/* ---------- câmera ao vivo ---------- */
+const FORMATOS = ["ean_13","ean_8","upc_a","upc_e","itf","code_128","code_39"];
+let stream = null, zx = null, ativo = false, track = null, luz = false;
+
+async function abrirCamera(){
+  mensagem(""); $("camera").hidden = false; $("camLuz").hidden = true; $("camTip").textContent = "Aponte para o código de barras. A leitura é automática.";
+  document.body.style.overflow = "hidden";
+  const video = $("video");
+  try {
+    let nativo = false;
+    if ("BarcodeDetector" in window){
+      try { const fs = await BarcodeDetector.getSupportedFormats(); nativo = fs.includes("ean_13"); } catch(e){}
+    }
+    if (nativo){
+      const det = new BarcodeDetector({formats:FORMATOS});
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
+      video.srcObject = stream; await video.play();
+      prepararLuz(stream);
+      ativo = true;
+      const tick = async () => {
+        if (!ativo) return;
+        try { const r = await det.detect(video); if (r.length){ lido(r[0].rawValue); return; } } catch(e){}
+        setTimeout(tick, 120);
+      };
+      tick();
+    } else if (window.ZXing){
+      zx = new ZXing.BrowserMultiFormatReader();
+      ativo = true;
+      await zx.decodeFromConstraints({video:{facingMode:{ideal:"environment"}}, audio:false}, video, (res) => { if (res && ativo) lido(res.getText()); });
+      if (video.srcObject) prepararLuz(video.srcObject);
+    } else throw new Error("sem leitor");
+  } catch(e){
+    fecharCamera();
+    const negado = e && (e.name === "NotAllowedError" || e.name === "SecurityError");
+    mensagem(negado ? "O navegador bloqueou a câmera. Libere o acesso à câmera para este site nas configurações do navegador e tente de novo." : "Não foi possível abrir a câmera ao vivo neste aparelho. Use “Foto do código” ou digite o número.", "bad");
+  }
+}
+function prepararLuz(s){
+  try {
+    track = s.getVideoTracks()[0];
+    const cap = track.getCapabilities ? track.getCapabilities() : {};
+    if (cap.torch){ $("camLuz").hidden = false; luz = false; $("camLuz").textContent = "Ligar lanterna"; }
+  } catch(e){}
+}
+$("camLuz").onclick = async () => {
+  if (!track) return;
+  try { luz = !luz; await track.applyConstraints({advanced:[{torch:luz}]}); $("camLuz").textContent = luz ? "Desligar lanterna" : "Ligar lanterna"; }
+  catch(e){ $("camLuz").hidden = true; }
+};
+function lido(txt){ fecharCamera(); buscarCodigo(txt); }
+function fecharCamera(){
+  ativo = false;
+  try { if (zx) zx.reset(); } catch(e){} zx = null;
+  const v = $("video");
+  const s = stream || v.srcObject;
+  if (s) s.getTracks().forEach(t => t.stop());
+  stream = null; track = null; v.srcObject = null;
+  $("camera").hidden = true; document.body.style.overflow = "";
+}
+$("btnCam").onclick = abrirCamera;
+$("camFechar").onclick = () => { fecharCamera(); focarScan(); };
+$("camDigitar").onclick = () => { fecharCamera(); focarScan(); };
+document.addEventListener("visibilitychange", () => { if (document.hidden && ativo) fecharCamera(); });
+
+/* ---------- foto do código ---------- */
+$("btnFoto").onclick = () => $("foto").click();
+$("foto").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  mensagem("Lendo a foto…", "warn");
+  const url = URL.createObjectURL(f);
+  try {
+    let code = null;
+    if ("BarcodeDetector" in window){
+      try { const det = new BarcodeDetector({formats:FORMATOS}); const r = await det.detect(await createImageBitmap(f)); if (r.length) code = r[0].rawValue; } catch(_){}
+    }
+    if (!code && window.ZXing){ const r = await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(url); code = r.getText(); }
+    if (!code) throw 0;
+    buscarCodigo(code);
+  } catch(_){ mensagem("Não consegui ler o código na foto. Tente mais perto, com boa luz e o código reto, ou digite o número.", "bad"); }
+  URL.revokeObjectURL(url);
+};
+
+/* ---------- início ---------- */
+pintarQuem();
+carregar();
+</script>
+</body>
+</html>
